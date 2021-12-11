@@ -14,3 +14,7 @@ The executable jar can be found in the `target` folder created by building.
 
 # JDK Version
 OpenJDK 16
+
+# Screenshots
+
+![Alt text](/screenshots/img1 "Optional Title")

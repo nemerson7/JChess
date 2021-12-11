@@ -17,5 +17,5 @@ OpenJDK 16
 
 # Screenshots
 
-<img src="https://github.com/nemerson7/JChess/blob/main/screenshots/img1.png" width="400" height="400">
-<img src="https://github.com/nemerson7/JChess/blob/main/screenshots/img1.png" width="400" height="400">
+<img src="https://github.com/nemerson7/JChess/blob/main/screenshots/img1.png" width="400" height="447">
+<img src="https://github.com/nemerson7/JChess/blob/main/screenshots/img2.png" width="400" height="447">

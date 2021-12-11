@@ -18,3 +18,4 @@ OpenJDK 16
 # Screenshots
 
 ![](/screenshots/img1.png){:height="50%" width="50%"}
+<img src="https://github.com/nemerson7/JChess/blob/main/screenshots/img1.png" width="100" height="100">

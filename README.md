@@ -17,4 +17,4 @@ OpenJDK 16
 
 # Screenshots
 
-![Alt text](/screenshots/img1.png "Optional Title" = 250x250)
+![Alt text](/screenshots/img1.png =250x250)

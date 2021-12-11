@@ -17,4 +17,4 @@ OpenJDK 16
 
 # Screenshots
 
-![Alt text](/screenshots/img1 "Optional Title")
+![Alt text](/screenshots/img1.png "Optional Title")

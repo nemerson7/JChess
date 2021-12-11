@@ -17,4 +17,4 @@ OpenJDK 16
 
 # Screenshots
 
-![](/screenshots/img1.png =250x250)
+![](/screenshots/img1.png)

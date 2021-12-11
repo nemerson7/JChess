@@ -17,4 +17,4 @@ OpenJDK 16
 
 # Screenshots
 
-![](/screenshots/img1.png)
+![](/screenshots/img1.png){:height="50%" width="50%"}

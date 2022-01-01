@@ -1,7 +1,7 @@
 # JChess
 Swing Chess Application
 
-# About this project
+# About this program
 This is a 2 player chess application built with Java and the Swing libraries. It has all of the rules of chess implemented, from castling to en passant captures.
 
 # Future ideas / Todo

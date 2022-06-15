@@ -55,5 +55,10 @@ public class Square extends JComponent {
         return this.row * this.boardPanelRef.cellSize;
     }
 
+    public String getNotationCoord() {
+        int row = Math.abs(this.row - 8);
+        int col = this.col + 97; //ascii arithmetic
+        return String.valueOf((char) col) + String.valueOf(row);
+    }
 
 }

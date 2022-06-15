@@ -2,7 +2,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class BoardPanel extends JPanel{
 
@@ -14,6 +19,9 @@ public class BoardPanel extends JPanel{
     public final int margin;
     private boolean whiteMove;
     private int turnCounter;
+    private Square enPassantTarget;
+    private int enPassantTurn;
+    private StockfishClient stockfish;
 
     public final String WHITE_PAWN;
     public final String WHITE_KNIGHT;
@@ -31,6 +39,17 @@ public class BoardPanel extends JPanel{
     public BoardPanel(GameJFrame frameRef) {
         this.frameRef = frameRef;
 
+        StockfishClient stockfish = new StockfishClient(this);
+        this.stockfish = stockfish;
+        this.stockfish.initialize();
+
+        //establishing close behavior
+        this.frameRef.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                stockfish.exitClient();
+            }
+        });
+
         this.whiteMove = true;
 
         this.setFocusable(true);
@@ -43,6 +62,7 @@ public class BoardPanel extends JPanel{
         this.cellSize = (this.frameRef.getHeight() - this.margin) / 8;
         this.turnCounter = 1;
 
+
         this.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -52,10 +72,27 @@ public class BoardPanel extends JPanel{
                         int newRow = e.getY() / cellSize;
                         int newCol = e.getX() / cellSize;
 
+
+
                         if (isCoordOnBoard(currRow, currCol)
                                 && board[currRow][currCol].piece.isPieceWhite() == whiteMove
                                 && (board[currRow][currCol].piece.getAllMoves().contains(board[newRow][newCol]))) {
+
                             makeMove(board[currRow][currCol], board[newRow][newCol]);
+                            //adding computer move
+                            Square[] computerMoves = new Square[0];
+                            try {
+                                computerMoves = stockfish.computerMove();
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            } catch (InterruptedException ex) {
+                                ex.printStackTrace();
+                            } catch (ExecutionException ex) {
+                                ex.printStackTrace();
+                            } catch (TimeoutException ex) {
+                                ex.printStackTrace();
+                            }
+                            makeMove(computerMoves[0], computerMoves[1]);
                         } else if (board[newRow][newCol].piece != null && board[newRow][newCol].piece.isPieceWhite() == whiteMove) {
                             currRow = newRow;
                             currCol = newCol;
@@ -64,6 +101,7 @@ public class BoardPanel extends JPanel{
                     e.getComponent().repaint();
                 }
             }
+
 
             @Override
             public void mousePressed(MouseEvent e) {
@@ -235,7 +273,13 @@ public class BoardPanel extends JPanel{
         if (!currSquare.piece.hasMoved
                 && currSquare.piece.isPiecePawn()
                 && (Math.abs(currSquare.row - goalSquare.row) == 2)) {
+
             boolean isWhite = currSquare.piece.isPieceWhite();
+
+            //adding en passant target for stockfish
+            this.enPassantTarget = this.board[currSquare.row + ((isWhite) ? -1 : 1)][currSquare.col];
+            this.enPassantTurn = this.turnCounter + 1;
+
             int goalRow = goalSquare.row;
             //adding en passant turn to the left pawn
             if (isCoordOnBoard(goalRow, goalSquare.col - 1)) {
@@ -306,6 +350,7 @@ public class BoardPanel extends JPanel{
             }
         }
 
+        System.out.println(this.parseBoardToFEN());
 
     }
 
@@ -447,6 +492,103 @@ public class BoardPanel extends JPanel{
 
     public int getTurnCounter() {
         return this.turnCounter;
+    }
+
+
+
+    public String parseBoardToFEN() {
+
+        StringBuilder out = new StringBuilder("");
+
+        for (int row = 0; row < 8; row++) {
+            int spaceCount = 0;
+            for (int col = 0; col < 8; col++) {
+                if (this.board[row][col].piece != null) {
+
+                    //adding spaces before adding piece
+                    if (spaceCount > 0) {
+                        out.append(String.valueOf(spaceCount));
+                        spaceCount = 0;
+                    }
+
+                    Piece piece = this.board[row][col].piece;
+                    boolean pieceIsWhite = piece.isPieceWhite();
+                    int outputPiece = (pieceIsWhite) ? 0 : 32; //used to find ascii char, black is lowercase so add 32 to white's char
+                    if (piece.isPieceKing()) {
+                        outputPiece += (int) 'K';
+                    } else if (piece.isPieceQueen()) {
+                        outputPiece += (int) 'Q';
+                    } else if (piece.isPieceRook()) {
+                        outputPiece += (int) 'R';
+                    } else if (piece.isPieceBishop()) {
+                        outputPiece += (int) 'B';
+                    } else if (piece.isPieceKnight()) {
+                        outputPiece += (int) 'N';
+                    } else if (piece.isPiecePawn()) {
+                        outputPiece += (int) 'P';
+                    }
+                    out.append((char) outputPiece);
+
+                } else /*on a space, count spaces*/ {
+                    spaceCount++;
+                    if (col == 7) {
+                        out.append(String.valueOf(spaceCount));
+                    }
+                }
+            }
+            //adding slash after rank
+            if (row != 7) {
+                out.append("/");
+            }
+        }
+
+        //adding player to move to string
+        if (this.whiteMove) {
+            out.append(" w ");
+        } else {
+            out.append(" b ");
+        }
+
+        boolean castleAdded = false;
+        if (((King) this.whiteKingSquare().piece).canCastleKingside()) {
+            castleAdded = true;
+            out.append("K");
+        }
+
+        if (((King) this.whiteKingSquare().piece).canCastleQueenside()) {
+            castleAdded = true;
+            out.append("Q");
+        }
+
+        if (((King) this.blackKingSquare().piece).canCastleKingside()) {
+            castleAdded = true;
+            out.append("k");
+        }
+
+        if (((King) this.blackKingSquare().piece).canCastleQueenside()) {
+            castleAdded = true;
+            out.append("q");
+        }
+
+        if (!castleAdded) {
+            out.append("-");
+        }
+
+        //adding enpassant target
+        if (this.turnCounter == this.enPassantTurn) {
+            out.append(" " + this.enPassantTarget.getNotationCoord());
+        } else {
+            out.append(" -");
+        }
+
+
+        //adding zero for 50 move rule so stockfish will ignore it
+        out.append(" 0 ");
+        //adding turn counter
+        out.append(String.valueOf(this.turnCounter/2)+"\n");
+
+
+        return out.toString();
     }
 
 }

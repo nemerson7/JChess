@@ -14,7 +14,7 @@ The project can be compiled with Maven by running `mvn package` from within the 
 The executable jar can be found in the `target` folder created by building.
 
 # Note
-In order for the computer player (the "Move" button) to work, make sure to run the jar from the commandline with the ```java -jar``` command. Also make sure that stockfish is installed on the PATH. To install on MacOS, do ```brew install stockfish``` or on Debian family do ```sudo apt-get install debian```
+In order for the computer player (the "Move" button, screenshots below show an older version) to work, make sure to run the jar from the commandline with the ```java -jar``` command. Also make sure that stockfish is installed on the PATH. To install on MacOS, do ```brew install stockfish``` or on Debian family do ```sudo apt-get install debian```
 
 # JDK Version
 OpenJDK 16

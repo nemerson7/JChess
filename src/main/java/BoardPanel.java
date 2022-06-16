@@ -89,7 +89,7 @@ public class BoardPanel extends JPanel {
 
                             makeMove(board[currRow][currCol], board[newRow][newCol]);
                             //adding computer move
-                            this.makeComputerMove();
+                            //this.makeComputerMove();
                         } else if (board[newRow][newCol].piece != null && board[newRow][newCol].piece.isPieceWhite() == whiteMove) {
                             currRow = newRow;
                             currCol = newCol;

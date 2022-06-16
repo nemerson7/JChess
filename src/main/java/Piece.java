@@ -28,13 +28,15 @@ public abstract class Piece {
         }
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, boolean flippedPerspective) {
         int imageWidth = this.image.getWidth();
         int imageHeight = this.image.getHeight();
         int cellSize = this.square.boardPanelRef.cellSize;
         //offseting so that the piece is centered in the square
+        int squareY = (flippedPerspective) ? Math.abs(this.square.getY() - (7*this.square.boardPanelRef.cellSize)) : this.square.getY();
+
         int xPos = this.square.getX() + (cellSize / 2) - (imageWidth / 2);
-        int yPos = this.square.getY() + (cellSize / 2) - (imageHeight / 2);
+        int yPos = squareY + (cellSize / 2) - (imageHeight / 2);
 
         g.drawImage(this.image, xPos, yPos, null);
     }

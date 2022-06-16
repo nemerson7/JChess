@@ -18,20 +18,20 @@ public class Square extends JComponent {
     }
 
 
-    public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g, boolean flippedPerspective) {
         super.paintComponent(g);
 
         Graphics2D g2 = (Graphics2D) g;
-
+        int row = (flippedPerspective) ? Math.abs(this.row - 7) : this.row;
         g2.setColor(this.color);
         g2.fillRect(
                 this.col * this.boardPanelRef.cellSize,
-                this.row * this.boardPanelRef.cellSize,
+                row * this.boardPanelRef.cellSize,
                 this.boardPanelRef.cellSize,
                 this.boardPanelRef.cellSize);
 
         if (this.piece != null) {
-            this.piece.draw(g);
+            this.piece.draw(g, flippedPerspective);
         }
     }
 

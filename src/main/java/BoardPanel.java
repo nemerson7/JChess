@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public class BoardPanel extends JPanel{
+public class BoardPanel extends JPanel {
 
     public final Square[][] board;
     public GameJFrame frameRef;
@@ -22,6 +22,7 @@ public class BoardPanel extends JPanel{
     private Square enPassantTarget;
     private int enPassantTurn;
     private StockfishClient stockfish;
+    private boolean flippedPerspective;
 
     public final String WHITE_PAWN;
     public final String WHITE_KNIGHT;
@@ -52,6 +53,7 @@ public class BoardPanel extends JPanel{
 
         this.whiteMove = true;
 
+        this.flippedPerspective = false;
         this.setFocusable(true);
         this.requestFocusInWindow();
         this.currRow = -1;
@@ -61,6 +63,8 @@ public class BoardPanel extends JPanel{
         this.margin = 64;
         this.cellSize = (this.frameRef.getHeight() - this.margin) / 8;
         this.turnCounter = 1;
+
+        BoardPanel refToThis = this;
 
 
         this.addMouseListener(new MouseListener() {
@@ -72,34 +76,46 @@ public class BoardPanel extends JPanel{
                         int newRow = e.getY() / cellSize;
                         int newCol = e.getX() / cellSize;
 
+                        if (refToThis.flippedPerspective) {
+                            newRow = Math.abs(newRow - 7);
+                        }
 
-
-                        if (isCoordOnBoard(currRow, currCol)
+                        //deselction
+                        if (currRow == newRow && currCol == newCol) {
+                            currRow = currCol = -1;
+                        } else if (isCoordOnBoard(currRow, currCol)
                                 && board[currRow][currCol].piece.isPieceWhite() == whiteMove
                                 && (board[currRow][currCol].piece.getAllMoves().contains(board[newRow][newCol]))) {
 
                             makeMove(board[currRow][currCol], board[newRow][newCol]);
                             //adding computer move
-                            Square[] computerMoves = new Square[0];
-                            try {
-                                computerMoves = stockfish.computerMove();
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
-                            } catch (InterruptedException ex) {
-                                ex.printStackTrace();
-                            } catch (ExecutionException ex) {
-                                ex.printStackTrace();
-                            } catch (TimeoutException ex) {
-                                ex.printStackTrace();
-                            }
-                            makeMove(computerMoves[0], computerMoves[1]);
+                            this.makeComputerMove();
                         } else if (board[newRow][newCol].piece != null && board[newRow][newCol].piece.isPieceWhite() == whiteMove) {
                             currRow = newRow;
                             currCol = newCol;
                         }
+
+                        //adding perspective flipping
+                    } else if (e.getY() > (refToThis.frameRef.getHeight() - refToThis.margin) && e.getX() > refToThis.frameRef.getWidth() - refToThis.cellSize) {
+                        refToThis.flippedPerspective = !refToThis.flippedPerspective;
+                        System.out.println("Perspective flipped");
+                    } else if (e.getY() > (refToThis.frameRef.getHeight() - refToThis.margin) && e.getX() > refToThis.frameRef.getWidth() - (2*refToThis.cellSize) && e.getX() < refToThis.frameRef.getWidth() - refToThis.cellSize) {
+                        this.makeComputerMove();
                     }
                     e.getComponent().repaint();
                 }
+
+
+            }
+
+            private void makeComputerMove() {
+                Square[] computerMoves = new Square[0];
+                try {
+                    computerMoves = stockfish.computerMove();
+                } catch (IOException | TimeoutException | InterruptedException | ExecutionException ex) {
+                    ex.printStackTrace();
+                }
+                makeMove(computerMoves[0], computerMoves[1]);
             }
 
 
@@ -194,29 +210,33 @@ public class BoardPanel extends JPanel{
 
         super.paintComponent(g);
 
-        System.out.println("currRow: "+ currRow + ", currCol: " + currCol);
-
+        //System.out.println("currRow: "+ currRow + ", currCol: " + currCol);
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                this.board[i][j].paintComponent(g);
+                this.board[i][j].paintComponent(g, this.flippedPerspective);
             }
         }
 
+
         //highlighting currently selected piece
         if (this.currRow != -1 && this.currCol != -1) {
+
+            int adjRow = (this.flippedPerspective) ? Math.abs(this.currRow - 7) : this.currRow;
+
             g.setColor(Color.ORANGE);
-            g.fillRect(currCol * cellSize,currRow * cellSize, cellSize, cellSize);
+            g.fillRect(currCol * cellSize,adjRow * cellSize, cellSize, cellSize);
             Square currSquare = this.board[currRow][currCol];
             if (currSquare.piece != null) {
-                currSquare.piece.draw(g);
+                currSquare.piece.draw(g, this.flippedPerspective);
             }
             assert currSquare.piece != null;
             ArrayList<Square> possibleMoves = currSquare.piece.getAllMoves();
             possibleMoves.forEach((square) -> {
                 g.setColor(Color.CYAN);
-                g.fillRect(square.col * cellSize, square.row * cellSize, cellSize, cellSize);
+                int adjSquareRow = (this.flippedPerspective) ? Math.abs(square.row - 7) : square.row;
+                g.fillRect(square.col * cellSize, adjSquareRow * cellSize, cellSize, cellSize);
                 if (square.piece != null) {
-                    square.piece.draw(g);
+                    square.piece.draw(g, this.flippedPerspective);
                 }
             });
 
@@ -246,6 +266,16 @@ public class BoardPanel extends JPanel{
         } else {
             g.drawString("Game in Progress", messageX, messageY);
         }
+
+        //adding button for flipping the perspective
+        int tempX = this.frameRef.getWidth() - this.cellSize;
+        g.drawLine(tempX, this.frameRef.getHeight() - this.margin, tempX, this.frameRef.getHeight());
+        g.drawString("Flip", tempX+20, messageY);
+
+        tempX = this.frameRef.getWidth() - (2*this.cellSize);
+        g.drawLine(tempX, this.frameRef.getHeight() - this.margin, tempX, this.frameRef.getHeight());
+        g.drawString("Move", tempX+15, messageY);
+
 
 
     }
@@ -576,7 +606,7 @@ public class BoardPanel extends JPanel{
 
         //adding enpassant target
         if (this.turnCounter == this.enPassantTurn) {
-            out.append(" " + this.enPassantTarget.getNotationCoord());
+            out.append(" ").append(this.enPassantTarget.getNotationCoord());
         } else {
             out.append(" -");
         }

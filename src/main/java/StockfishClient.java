@@ -52,7 +52,7 @@ public class StockfishClient {
         System.out.println("exited stockfish process\n");
     }
 
-    //taken from this cool blog post:
+    // adapted from this cool blog post:
     // https://www.andreinc.net/2021/04/22/writing-a-universal-chess-interface-client-in-java
     public <T> T command(String cmd, Function<List<String>, T> commandProcessor, Predicate<String> breakCondition, long timeout)
             throws InterruptedException, ExecutionException, TimeoutException {
